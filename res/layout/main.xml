@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<TextView android:id="@+id/text"
+      	android:layout_width="fill_parent"
+      	android:layout_height="wrap_content"
+		android:text="Hello, this is AndroidMTK. Download the memory of your GPS to your phone and clear memory!" />
+<Button android:id="@+id/buttonget"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Download log from device" />
+<Button android:id="@+id/buttondel"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Clear log on device" />
+<Button android:id="@+id/buttonhelp"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Help" />
+</LinearLayout>
