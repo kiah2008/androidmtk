@@ -260,12 +260,12 @@ public class ParseBinFile {
 						bytes_read += 4;
 						height = buf.getFloat();
 					}
-					Log(String.format("Height %f", height));
+					Log(String.format("Height %f m", height));
 				}
 				if ((log_format & LOG_FORMAT_SPEED) == LOG_FORMAT_SPEED) {
 					bytes_read += 4;
-					speed = buf.getFloat();
-					Log(String.format("Speed %f", speed));
+					speed = (float) (buf.getFloat() / 3.6);
+					Log(String.format("Speed %f m/s", speed));
 				}
 				if ((log_format & LOG_FORMAT_HEADING) == LOG_FORMAT_HEADING) {
 					bytes_read += 4;
