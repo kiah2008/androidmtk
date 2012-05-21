@@ -213,6 +213,7 @@ public class ParseBinFile {
 				double lat = 0;
 				double lon = 0;
 				float height = 0;
+				float speed = 0;
 				if ((log_format & LOG_FORMAT_UTC) == LOG_FORMAT_UTC) {
 					bytes_read += 4;
 					utc_time = buf.getInt();
@@ -263,7 +264,7 @@ public class ParseBinFile {
 				}
 				if ((log_format & LOG_FORMAT_SPEED) == LOG_FORMAT_SPEED) {
 					bytes_read += 4;
-					float speed = buf.getFloat();
+					speed = buf.getFloat();
 					Log(String.format("Speed %f", speed));
 				}
 				if ((log_format & LOG_FORMAT_HEADING) == LOG_FORMAT_HEADING) {
@@ -373,7 +374,7 @@ public class ParseBinFile {
                     	gpx_in_trk = true;
                     }
                     if (valid != VALID_NOFIX && checksum == read_checksum) {
-                    	WriteTrackPoint(writer, lat, lon, height, utc_time);
+                    	WriteTrackPoint(writer, lat, lon, height, utc_time, speed);
                     }
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -429,7 +430,7 @@ public class ParseBinFile {
 	    gpx_trk_number++;
 	}
 
-	public void WriteTrackPoint(FileWriter writer, double lat, double lon, double height, int time) throws IOException {
+	public void WriteTrackPoint(FileWriter writer, double lat, double lon, double height, int time, double speed) throws IOException {
 		long timestamp = (long)time * 1000;  // msec  
 		java.util.Date date = new java.util.Date(timestamp);
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -438,7 +439,8 @@ public class ParseBinFile {
 				"<trkpt lat=\"%.9f\" lon=\"%.9f\">\n" +
 				"  <ele>%.6f</ele>\n" +
 				"  <time>%s</time>\n" +
-				"</trkpt>\n", lat, lon, height, formatter.format(date)));
+				"  <speed>%.6f</speed>\n" +
+				"</trkpt>\n", lat, lon, height, formatter.format(date), speed));
 	}
 
 	public void WriteTrackEnd(FileWriter writer) throws IOException {
