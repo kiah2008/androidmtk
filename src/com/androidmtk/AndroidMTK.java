@@ -106,7 +106,7 @@ public class AndroidMTK extends Activity {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
-        
+
         Log.i(TAG, "+++ GPS bluetooth device: "+sharedPreferences.getString("bluetoothListPref","-1"));
 /*
     	File bin_file = new File(Environment.getExternalStorageDirectory(), "gpslog2011-07-31_1025_holux.bin");
@@ -495,6 +495,123 @@ public class AndroidMTK extends Activity {
             msg.setData(b);
             mHandler.sendMessage(msg);
         }
+    }
+    
+    // **** Restarting code ****
+    
+    public void hotStart(View v)
+    {
+    	performRestart(1);    
+    }
+    
+    public void warmStart(View v)
+    {
+    	performRestart(2);    
+    }
+
+    public void coldStart(View v)
+    {
+    	performRestart(3);    
+    }
+    
+    private void performRestart(int mode)
+    {
+    	String restartName;
+    	String restartCommand;
+    	String restartResponse;
+    	switch (mode)
+    	{
+    		case 1: 
+    			restartName = "Hot start";
+    			restartCommand = "PMTK101";
+    			restartResponse = "PMTK010,001";
+    			break;
+    		case 2: 
+    			restartName = "Warm start";
+    			restartCommand = "PMTK102";
+    			restartResponse = "PMTK010,001";
+    			break;
+    		case 3: 
+    			restartName = "Cold start";
+    			restartCommand = "PMTK103";
+    			restartResponse = "PMTK010,001";
+    			break;
+   			default: 
+   				Toast.makeText(this, "Unrecognized restart mode", Toast.LENGTH_LONG).show();
+   				return;
+    	}
+    	Log.v(TAG, "+++ ON " + restartName + " +++");
+
+    	GPS_bluetooth_id = sharedPreferences.getString("bluetoothListPref","-1");
+    	if (GPS_bluetooth_id == "-1" || GPS_bluetooth_id.length() == 0) {
+    		// No GPS device selected in the preferences
+    		AlertDialog.Builder builder = new AlertDialog.Builder(AndroidMTK.this);
+    		builder.setMessage("Please select a GPS device in the preferences first!");
+    		builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+    	           public void onClick(DialogInterface dialog, int id) {
+    	           	Intent preferenceActivity = new Intent(getBaseContext(),
+    	                    MyPreferenceActivity.class);
+    	        	startActivity(preferenceActivity);
+    	           }
+    	       });
+    		builder.show();
+    		return;
+    	}
+
+    	dialog = ProgressDialog.show(this, "Performing " + restartName, 
+                "Please wait...", true , false);
+
+    	// Start a thread to do the restarting
+    	RestartThread thread = new RestartThread(RestartThreadHandler, restartName, restartCommand, restartResponse);
+    	thread.start();
+
+    	Log.d(TAG, "++++ Done: " + restartName );
+    }
+
+    // Define a Handler 
+    final Handler RestartThreadHandler = new Handler() {
+    	public void handleMessage(Message msg) {
+        	dialog.dismiss();
+        	Toast.makeText(AndroidMTK.this, (String)msg.obj, Toast.LENGTH_LONG).show();	
+        }
+    };
+    
+
+    /** Nested class that performs the restart */
+    private class RestartThread extends Thread {
+    	Handler mHandler;
+    	String restartName;
+    	String restartCommand;
+    	String restartResponse;   	
+
+        RestartThread(Handler h, String name, String command, String response) {
+        	mHandler = h;
+        	restartName = name;
+        	restartCommand = command;
+        	restartResponse = response;
+        }
+       
+        public void run() {
+        	GPSrxtx gpsdev = new GPSrxtx(mBluetoothAdapter, GPS_bluetooth_id);
+			Message msg = mHandler.obtainMessage();
+        	if (gpsdev.connect()) {
+        		// Send the command to perform restart
+            	gpsdev.sendCommand(restartCommand);
+        		// Wait for reply from the device
+            	gpsdev.waitForReply(restartResponse);
+            	gpsdev.close();
+    			msg.obj = restartName + " succeed";
+        	}
+        	else
+        		msg.obj = restartName + " failed";
+        	
+			mHandler.sendMessage(msg);
+        }
+    }
+
+    public void close(View v)
+    {
+    	finish();    	
     }
 }
 
