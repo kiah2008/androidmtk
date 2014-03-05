@@ -76,7 +76,7 @@ public class GPSrxtx {
 		return true;
 	}
 
-	public void sendCommand(String command) {
+	public void sendCommand(String command) throws IOException {
 		int i = command.length();
 		byte checksum = 0;
 		while (--i >= 0) {
@@ -89,52 +89,70 @@ public class GPSrxtx {
 		rec.append('*');
 		rec.append(Integer.toHexString(checksum));
 		rec.append("\r\n");
-		//Log.d(TAG, "++++ Writing: " + rec.toString() );
+		Log.d(TAG, "++++ Writing: " + rec.toString() );
 
 		// Actually send it
-		try {
-			out.write(rec.toString().getBytes());
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
+		out.write(rec.toString().getBytes());
 	}
 
-	public String waitForReply(String reply) {
-        // Read from the device until we get the reply we are looking for
-        byte[] buf = new byte[50];
-    	int read = 0;
-    	//Log.d(TAG, "++++ Reading from device...");
-    	try {
-			while (true) {
-    			read = in.read(buf);
-    			for (int j = 0; j < read; j++) {
-    				char b = (char)(buf[j] & 0xff);
-    				// Check if this is the start of a new message
-    				if (buffer.length() > 0 && b == '$') {
-    					// Yep new message started, parse old message (if any)
-    					String message = buffer.toString();
-    					//Log.d(TAG, "++++ Received a message: "+ message);
-    					if (message.charAt(0) == '$') {
-    						if (message.indexOf(reply, 0) > 0) {
-    							//Log.d(TAG, "++++ Breaking because we received:" + reply);
-    							buffer.setLength(0);
-    							for (int k = j; k < read; k++) {
-    								char c = (char)(buf[k] & 0xff);
-    								buffer.append(c);
-    							}
-    							return message;
-    						}
-    					}
-    					buffer.setLength(0);
-    				}
-    				buffer.append(b);
-    			}
-    		}
-    	} catch (IOException e) {}
+	public byte[] readBytes(double timeout) throws IOException, InterruptedException
+	{
+    	double time = 0.0;
+    	int bytes_available = 0;
 
-    	return "";
+    	while((bytes_available = in.available()) == 0 && time < timeout) {
+    	    // throws interrupted exception
+    	    Thread.sleep(250);
+    	    time += 0.25;
+    	}
+   		byte[] buf = new byte[bytes_available];
+   		in.read(buf);
+   		
+   		Log.d(TAG, "++++ Read "+bytes_available+" bytes from GPS");
+		return buf;
 	}
 	
+	public String waitForReply(String reply, double timeout) throws IOException, InterruptedException 
+	{
+		byte[] buf;
+		// Read from the device until we get the reply we are looking for
+    	Log.d(TAG, "++++ Reading from device, waiting for: " +reply+", timeout: "+ timeout);
+
+    	int i = 0;
+		while (i < 100) {
+			buf = readBytes(timeout);
+			if (buf.length == 0) {
+				Log.d(TAG, "++++ No bytes read from device!");
+				throw new IOException();
+			}
+    		for (int j = 0; j < buf.length; j++) {
+    			char b = (char)(buf[j] & 0xff);
+    			// Check if this is the start of a new message
+    			if (buffer.length() > 0 && b == '$') {
+    				// Yep new message started, parse old message (if any)
+    				i++;
+    				String message = buffer.toString();
+    				Log.d(TAG, "++++ Received a message("+i+"): "+ message);
+    				if (message.charAt(0) == '$') {
+    					if (message.indexOf(reply, 0) > 0) {
+    						Log.d(TAG, "++++ Breaking because we received:" + reply);
+    						buffer.setLength(0);
+    						for (int k = j; k < buf.length; k++) {
+    							char c = (char)(buf[k] & 0xff);
+    							buffer.append(c);
+    						}
+    						return message;
+    					}
+    				}
+    				buffer.setLength(0);
+    			}
+    			buffer.append(b);
+    		}
+		}
+		// We did not receive the message we where waiting for after 100 messages! Return empty string.
+		Log.d(TAG, "++++ We did not receive " + reply + " for after 100 messages!");
+    	return "";
+	}
 	
 	public void close() {
 		Log.d(TAG, "++++ close()");

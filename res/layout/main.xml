@@ -3,52 +3,58 @@
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
-<TextView android:id="@+id/text"
-      	android:layout_width="fill_parent"
-      	android:layout_height="wrap_content"
-		android:text="Hello, this is AndroidMTK. Download the memory of your GPS to your phone and clear memory!" />
-<Button android:id="@+id/buttonget"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="Download log from device" />
-<Button android:id="@+id/buttondel"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="Clear log on device" />
-<Button android:id="@+id/buttonhelp"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="Help" />
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    >
-	<Button android:id="@+id/buttonhotstart"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Hot start" 
-        android:onClick="hotStart" />
-	<Button android:id="@+id/buttonwarmstart"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Warm start"
-        android:onClick="warmStart" />
-	<Button android:id="@+id/buttoncoldstart"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Cold start" 
-        android:onClick="coldStart" />
-</LinearLayout>    
-
-<Button android:id="@+id/buttonclose"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="Exit"
-        android:onClick="close" />
-
-    
+    <ScrollView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+            <LinearLayout 
+	                  android:layout_width="fill_parent"
+	                  android:layout_height="wrap_content"
+	                  android:orientation="vertical">
+                    <!-- Content here -->
+					<Button android:id="@+id/buttonhelp"
+					        android:layout_width="fill_parent"
+					        android:layout_height="wrap_content"
+					        android:text="Help" />
+					<Button android:id="@+id/buttonget"
+					        android:layout_width="fill_parent"
+					        android:layout_height="wrap_content"
+					        android:text="Download log from GPS receiver" />
+					<Button android:id="@+id/buttondel"
+					        android:layout_width="fill_parent"
+					        android:layout_height="wrap_content"
+					        android:text="Delete log from GPS receiver" />
+					<LinearLayout
+					    android:orientation="horizontal"
+					    android:layout_width="fill_parent"
+					    android:layout_height="wrap_content">
+						<Button android:id="@+id/buttonhotstart"
+					        android:layout_width="wrap_content"
+					        android:layout_height="wrap_content"
+					        android:layout_weight="1"
+					        android:text="Hot start" 
+					        android:onClick="hotStart" />
+						<Button android:id="@+id/buttonwarmstart"
+					        android:layout_width="wrap_content"
+					        android:layout_height="wrap_content"
+					        android:layout_weight="1"
+					        android:text="Warm start"
+					        android:onClick="warmStart" />
+						<Button android:id="@+id/buttoncoldstart"
+					        android:layout_width="wrap_content"
+					        android:layout_height="wrap_content"
+					        android:layout_weight="1"
+					        android:text="Cold start" 
+					        android:onClick="coldStart" />
+					</LinearLayout>    
+					<Button android:id="@+id/buttonclose"
+					        android:layout_width="fill_parent"
+					        android:layout_height="wrap_content"
+					        android:text="Exit"
+					        android:onClick="close" />
+					<TextView android:id="@+id/main_textview"
+					      	android:layout_width="fill_parent"
+					      	android:layout_height="wrap_content"
+					      	android:lines="100" />
+            </LinearLayout>
+      </ScrollView>
 </LinearLayout>

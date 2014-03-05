@@ -34,5 +34,25 @@
             android:entries="@array/listChunkSizeShow"
   			android:entryValues="@array/listChunkSizeReturn"
             />
-	</PreferenceCategory>
+    	<ListPreference
+        	android:title="Memory size"
+            android:summary="Size of GPS memory"
+            android:key="memSizePref"
+            android:defaultValue="0"
+            android:entries="@array/listMemSizeShow"
+  			android:entryValues="@array/listMemSizeReturn"
+            />
+    	<ListPreference
+        	android:title="Overlap mode"
+            android:summary="Choose what happens for GPS in overlap mode"
+            android:key="overlapPref"
+            android:defaultValue="0"
+            android:entries="@array/listOverlapShow"
+  			android:entryValues="@array/listOverlapReturn"
+            />
+    	<Preference
+            android:key="path"
+            android:summary="The location the exported data is saved to"
+            android:title="Save Path" />
+    </PreferenceCategory>
 </PreferenceScreen> 
