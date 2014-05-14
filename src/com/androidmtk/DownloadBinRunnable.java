@@ -40,7 +40,7 @@ public class DownloadBinRunnable implements Runnable {
 	private boolean createGPX = true;
 	private int SIZEOF_CHUNK = 0x0800;
     private int SIZEOF_GPS_MEMORY = 0;
-	private int OVERLAP_MODE = 0;	
+	private int OVERWRITE_MODE = 0;	
     private String PathName = "";
     private static String GPS_bluetooth_id;
 
@@ -53,7 +53,7 @@ public class DownloadBinRunnable implements Runnable {
 		createGPX = AndroidMTK.getSharedPreferences().getBoolean("createGPXPref", true);
 		SIZEOF_CHUNK = Integer.parseInt(AndroidMTK.getSharedPreferences().getString("chunkSizePref", "4096"));
     	SIZEOF_GPS_MEMORY = Integer.parseInt(AndroidMTK.getSharedPreferences().getString("memSizePref", "0"));
-    	OVERLAP_MODE = Integer.parseInt(AndroidMTK.getSharedPreferences().getString("overlapPref", "0"));
+    	OVERWRITE_MODE = Integer.parseInt(AndroidMTK.getSharedPreferences().getString("overwritePref", "0"));
     	PathName = AndroidMTK.getSharedPreferences().getString("Path", Environment.getExternalStorageDirectory().toString() );
     	GPS_bluetooth_id = AndroidMTK.getSharedPreferences().getString("bluetoothListPref", "-1");
 	}
@@ -153,7 +153,7 @@ public class DownloadBinRunnable implements Runnable {
     	if (gpsdev.connect()) {
 			Log(String.format("Connected to GPS device: %s", GPS_bluetooth_id));
 
-    		// Query recording method when full (OVERLAP/STOP).
+    		// Query recording method when full (OVERWRITE/STOP).
 			Log("Sending command: PMTK182,2,6 and waiting for reply: PMTK182,3,6,");
     		try {
 				gpsdev.sendCommand("PMTK182,2,6");
@@ -187,18 +187,18 @@ public class DownloadBinRunnable implements Runnable {
         	// Determine how much bytes we need to read from the memory
         	int bytes_to_read = SIZEOF_GPS_MEMORY;
         	if (log_full_method == 1) {
-        		// Device is in OVERLAP mode we don't know where data ends; read the entire memory.
-        		if (OVERLAP_MODE == 0) {
-                    sendMessageToMessageField("NOTE! Your device is in 'Overwrite when FULL mode', this is not a very efficient mode for download over bluetooth. Aborting! If you really want to download in this mode, please enable it via the preferences");            		
+        		// Device is in OVERWRITE mode we don't know where data ends; read the entire memory.
+        		if (OVERWRITE_MODE == 0) {
+                    sendMessageToMessageField("NOTE! Your device is in 'OVERWRITE when FULL mode', this is not a very efficient mode for download over bluetooth. Aborting! If you really want to download in this mode, please enable it via the preferences");            		
             		sendCloseProgress();
                 	closeGPS();
                     return;
         		}
         		if (bytes_to_read > 0) {
-            		Log(String.format("Device is in OVERLAP mode, memory size set by user preferences"));
+            		Log(String.format("Device is in OVERWRITE mode, memory size set by user preferences"));
         		}
         		else {
-            		Log(String.format("Device is in OVERLAP mode, trying to determine memory size"));
+            		Log(String.format("Device is in OVERWRITE mode, trying to determine memory size"));
             		int flashManuProdID = 0;
             		// Query memory information
         			Log("Sending command: PMTK605 and waiting for reply: PMTK705,");
@@ -346,7 +346,7 @@ public class DownloadBinRunnable implements Runnable {
 					}
                 }
                 // In OVERWRITE mode when user asked us, when we find and empty sector assume rest of memory is empty
-        		if (OVERLAP_MODE == 1 && number_of_empty == bytes_received) {
+        		if (OVERWRITE_MODE == 1 && number_of_empty == bytes_received) {
         			offset = bytes_to_read;
         			Log(String.format("Found empty SIZEOF_CHUNK, stopping reading any further"));
         		}

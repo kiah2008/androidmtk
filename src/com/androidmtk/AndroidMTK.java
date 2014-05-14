@@ -1,8 +1,13 @@
 package com.androidmtk;
 
 import com.androidmtk.R;
+
+import android.app.ActionBar;
+import android.app.ActionBar.Tab;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.DialogInterface;
@@ -19,11 +24,9 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
-public class AndroidMTK extends Activity 
+public class AndroidMTK extends Activity  
 {
 	public static final String TAG = "AndroidMTK";
 	
@@ -35,12 +38,8 @@ public class AndroidMTK extends Activity
     // Preferences 
     // Bluetooth device string
     private static String GPS_bluetooth_id;
+
     // Bluetooth device string
-    
-    private Button buttondel;
-    private Button buttonget;
-    private Button buttonhelp;
-    private TextView main_textview;
     private ProgressDialog dialog;
     
     // Output date
@@ -51,7 +50,8 @@ public class AndroidMTK extends Activity
 	
 	// Keys
 	public static final String KEY_TOAST = "toast";
-	public static final String MESSAGEFIELD = "textSwitcher";
+	public static final String MESSAGEFIELD = "msgField";
+	public static final String SETTINGS_MESSAGEFIELD = "settingsMsgField";
 	public static final String KEY_PROGRESS = "progressCompleted";
 	public static final String CLOSE_PROGRESS = "closeProgressDialog";
 	public static final String CREATEGPX = "parseBinFile";
@@ -66,49 +66,13 @@ public class AndroidMTK extends Activity
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.v(TAG, "+++ ON CREATE +++");
-
+        
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		// Clear all preferences. FOR TESTING!
         //SharedPreferences.Editor editor = sharedPreferences.edit();
         //editor.clear();
         //editor.commit();
-        
-        // Create the layout with a couple of buttons
-        setContentView(R.layout.main);
-        buttondel = (Button) findViewById(R.id.buttondel);
-        buttondel.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                // Perform action on click
-            	new AlertDialog.Builder(AndroidMTK.this)
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .setTitle("Delete log from GPS receiver?")
-                .setMessage("Are you sure?")
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                    	delLog();    
-                    }
 
-                })
-                .setNegativeButton("No!", null)
-                .show();
-            }
-        });
-        buttonget = (Button) findViewById(R.id.buttonget);
-        buttonget.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                // Perform action on click
-            	getLog();
-            }
-        });
-        buttonhelp = (Button) findViewById(R.id.buttonhelp);
-        buttonhelp.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                // Perform action on click
-            	startActivity(new Intent(getBaseContext(), Help.class));
-            }
-        });
-        main_textview = (TextView) findViewById(R.id.main_textview);
         // Check if device has Bluetooth
     	mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
@@ -123,8 +87,70 @@ public class AndroidMTK extends Activity
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
-
         Log.i(TAG, "+++ GPS bluetooth device: "+sharedPreferences.getString("bluetoothListPref","-1"));
+        
+        final ActionBar bar = getActionBar();
+        bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        //bar.setDisplayOptions(1, ActionBar.DISPLAY_SHOW_TITLE);
+        
+        bar.addTab(bar.newTab()
+                .setText("Download")
+                .setTabListener(new TabListener<DownloadFragment>(this, "download", DownloadFragment.class)));
+        
+        bar.addTab(bar.newTab()
+            .setText("Help")
+            .setTabListener(new TabListener<HelpFragment>(this, "help", HelpFragment.class)));
+        
+        bar.addTab(bar.newTab()
+                .setText("GPS Settings")
+                .setTabListener(new TabListener<GPSSettingsFragment>(this, "gps_settings", GPSSettingsFragment.class)));
+    
+        createGPX("2014-04-25_093511");
+    }
+    
+    // **** Restarting Button code ****
+    public void hotStart(View v) {
+    	performRestart(1);    
+    }
+    
+    public void warmStart(View v) {
+    	performRestart(2);    
+    }
+
+    public void coldStart(View v) {
+    	performRestart(3);    
+    }
+    
+    public void set_MemFull_STOP(View v) {
+    	Log.v(TAG, "+++ set_MemFull_STOP() +++");
+
+		if (!isGPSSelected())
+			return;
+		
+    	dialog = ProgressDialog.show(this, "Changing GPS settings", "Please wait...", true, false);
+    	
+    	// Start a thread to do the deleting
+    	ChangeGPSSettingsRunable runnable = new ChangeGPSSettingsRunable(ThreadHandler, "PMTK182,1,6,2", "PMTK001,182,1,");
+		Thread thread = new Thread(runnable);
+		thread.start();
+
+    	Log.d(TAG, "++++ Done: set_MemFull_STOP()");
+    }
+    
+    public void set_MemFull_OVERWRITE(View v) {
+    	Log.v(TAG, "+++ set_MemFull_OVERWRITE() +++");
+    	
+    	if (!isGPSSelected())
+			return;
+		
+    	dialog = ProgressDialog.show(this, "Changing GPS settings", "Please wait...", true, false);
+    	
+    	// Start a thread to do the deleting
+    	ChangeGPSSettingsRunable runnable = new ChangeGPSSettingsRunable(ThreadHandler, "PMTK182,1,6,1", "PMTK001,182,1,");
+		Thread thread = new Thread(runnable);
+		thread.start();
+
+    	Log.d(TAG, "++++ Done: set_MemFull_OVERWRITE()");
     }
     
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -151,16 +177,9 @@ public class AndroidMTK extends Activity
         case R.id.preferences:
         	startActivity(new Intent(getBaseContext(), MyPreferenceActivity.class));
             return true;
-        case R.id.help:
-        	startActivity(new Intent(getBaseContext(), Help.class));
-            return true;
         default:
             return super.onOptionsItemSelected(item);
         }
-    }
-    
-    public void writeToMainTextArea(String text) {
-    	main_textview.setText(text + '\n' + main_textview.getText());
     }
     
     public void delLog() {
@@ -179,7 +198,7 @@ public class AndroidMTK extends Activity
     	Log.d(TAG, "++++ Done: delLog()");
     }
 
-    public void getLog() {
+    public void getLog(View v) {
     	Log.v(TAG, "+++ getLog() +++");
 
 		// Get some preferences information
@@ -194,7 +213,7 @@ public class AndroidMTK extends Activity
     	dialog = new ProgressDialog(this);
     	dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
     	dialog.setMessage("Downloading log from GPS receiver");
-    	dialog.setCancelable(true);
+    	dialog.setCancelable(false);
     	dialog.setOnCancelListener(new OnCancelListener() {
             public void onCancel(DialogInterface dialog) {
             	killGetThread();
@@ -212,23 +231,10 @@ public class AndroidMTK extends Activity
     }
 
     public void killGetThread() {
-    	writeToMainTextArea("Trying to cancel the thread");
+    	//writeToMainTextArea("Trying to cancel the thread");
     	downloadBin.running = false;
     }
 
-    // **** Restarting code ****
-    public void hotStart(View v) {
-    	performRestart(1);    
-    }
-    
-    public void warmStart(View v) {
-    	performRestart(2);    
-    }
-
-    public void coldStart(View v) {
-    	performRestart(3);    
-    }
-    
     private void performRestart(int mode) {
     	Log.v(TAG, "+++ performRestart() +++");
 
@@ -249,8 +255,14 @@ public class AndroidMTK extends Activity
     final Handler ThreadHandler = new Handler() {
     	public void handleMessage(Message msg) {
     		if (msg.getData().containsKey(MESSAGEFIELD)) {
-    			writeToMainTextArea(msg.getData().getString(MESSAGEFIELD));
+    			DownloadFragment downFragment = (DownloadFragment)getFragmentManager().findFragmentByTag("download");
+    			downFragment.writeToMessageField(msg.getData().getString(MESSAGEFIELD));
     		}
+    		if (msg.getData().containsKey(SETTINGS_MESSAGEFIELD)) {
+    			GPSSettingsFragment fragment = (GPSSettingsFragment)getFragmentManager().findFragmentByTag("gps_settings");
+    			fragment.writeToMessageField(msg.getData().getString(SETTINGS_MESSAGEFIELD));
+    		}
+    		
     		if (msg.getData().containsKey(CLOSE_PROGRESS)) {
         		if (msg.getData().getInt(CLOSE_PROGRESS) == 1){
         			dialog.dismiss();
@@ -317,4 +329,58 @@ public class AndroidMTK extends Activity
 		Thread gpxThread = new Thread(parseBinFile);
 		gpxThread.start();
 	}
+	
+	@Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("tab", getActionBar().getSelectedNavigationIndex());
+    }
+	
+	public static class TabListener<T extends Fragment> implements ActionBar.TabListener {
+        private final Activity mActivity;
+        private final String mTag;
+        private final Class<T> mClass;
+        private final Bundle mArgs;
+        private Fragment mFragment;
+
+        public TabListener(Activity activity, String tag, Class<T> clz) {
+            this(activity, tag, clz, null);
+        }
+
+        public TabListener(Activity activity, String tag, Class<T> clz, Bundle args) {
+            mActivity = activity;
+            mTag = tag;
+            mClass = clz;
+            mArgs = args;
+
+            // Check to see if we already have a fragment for this tab, probably
+            // from a previously saved state.  If so, deactivate it, because our
+            // initial state is that a tab isn't shown.
+            mFragment = mActivity.getFragmentManager().findFragmentByTag(mTag);
+            if (mFragment != null && !mFragment.isDetached()) {
+                FragmentTransaction ft = mActivity.getFragmentManager().beginTransaction();
+                ft.detach(mFragment);
+                ft.commit();
+            }
+        }
+
+        public void onTabSelected(Tab tab, FragmentTransaction ft) {
+            if (mFragment == null) {
+                mFragment = Fragment.instantiate(mActivity, mClass.getName(), mArgs);
+                ft.add(android.R.id.content, mFragment, mTag);
+            } else {
+                ft.attach(mFragment);
+            }
+        }
+
+        public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+            if (mFragment != null) {
+                ft.detach(mFragment);
+            }
+        }
+
+        public void onTabReselected(Tab tab, FragmentTransaction ft) {
+            //Toast.makeText(mActivity, "Reselected!", Toast.LENGTH_SHORT).show();
+        }
+    }
 }

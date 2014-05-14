@@ -167,8 +167,9 @@ public class ParseBinFile  implements Runnable {
 				byte[] tmp = new byte[0x10];
 				// Test for record separators
 				int seperator_length = 0x10;
+				Log(String.format("Reading offset: %x", buf.position()));
 				buf.get(tmp);
-                if (!LOG_IS_HOLUX_M241 && tmp[0] == (byte) 0xAA && tmp[1] == (byte) 0xAA
+                if (tmp[0] == (byte) 0xAA && tmp[1] == (byte) 0xAA
 						&& tmp[2] == (byte) 0xAA && tmp[3] == (byte) 0xAA
 						&& tmp[4] == (byte) 0xAA && tmp[5] == (byte) 0xAA
 						&& tmp[6] == (byte) 0xAA && tmp[15] == (byte) 0xBB
@@ -200,7 +201,12 @@ public class ParseBinFile  implements Runnable {
 					}
 					continue;
 				} 
-                else if (String.valueOf(tmp).contains("HOLUXGR241LOGGER")) {
+                else if (tmp[0] == (byte) 0x48 && tmp[1] == (byte) 0x4F
+						&& tmp[2] == (byte) 0x4C && tmp[3] == (byte) 0x55
+						&& tmp[4] == (byte) 0x58 && tmp[5] == (byte) 0x47
+						&& tmp[6] == (byte) 0x52 && tmp[15] == (byte) 0x52
+						&& tmp[14] == (byte) 0x45 && tmp[13] == (byte) 0x47
+						&& tmp[12] == (byte) 0x47) {
 					LOG_IS_HOLUX_M241 = true;
 					Log("Found a HOLUX M241 separator!");
 					byte[] tmp4 = new byte[4];

@@ -2,24 +2,19 @@ package com.androidmtk;
 
 import java.io.IOException;
 
-import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 
 /** Nested class that performs the restart */
-public class RestartRunnable implements Runnable 
+public class RestartRunnable extends GeneralRunnable 
 {
-	Handler mHandler;
 	private String restartName;
 	private String restartCommand;
 	private String restartResponse;
-	private static String GPS_bluetooth_id;
 
 	RestartRunnable(Handler h, int mode) 
 	{
-		mHandler = h;
-		GPS_bluetooth_id = AndroidMTK.getSharedPreferences().getString("bluetoothListPref", "-1");
+		super(h);
 		
 		String restartName;
 		String restartCommand;
@@ -84,29 +79,4 @@ public class RestartRunnable implements Runnable
 		sendCloseProgress();
 		Log.d(AndroidMTK.TAG, "++++ Done: " + restartName);
 	}
-
-	private void sendTOAST(String message) {
-		Message msg = mHandler.obtainMessage();
-		Bundle b = new Bundle();
-		b.putString(AndroidMTK.KEY_TOAST, message);
-		msg.setData(b);
-		mHandler.sendMessage(msg);
-	}
-
-	private void sendMessageField(String message) {
-		Message msg = mHandler.obtainMessage();
-		Bundle b = new Bundle();
-		b.putString(AndroidMTK.MESSAGEFIELD, message);
-		msg.setData(b);
-		mHandler.sendMessage(msg);
-	}
-	
-	private void sendCloseProgress() {
-		Message msg = mHandler.obtainMessage();
-		Bundle b = new Bundle();
-		b.putInt(AndroidMTK.CLOSE_PROGRESS, 1);
-		msg.setData(b);
-		mHandler.sendMessage(msg);
-	}
-
 }

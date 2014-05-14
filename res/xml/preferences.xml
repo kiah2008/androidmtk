@@ -43,12 +43,12 @@
   			android:entryValues="@array/listMemSizeReturn"
             />
     	<ListPreference
-        	android:title="Overlap mode"
-            android:summary="Choose what happens for GPS in overlap mode"
-            android:key="overlapPref"
+        	android:title="Overwrite mode"
+            android:summary="Choose what happens for GPS in OVERWRITE mode"
+            android:key="overwritePref"
             android:defaultValue="0"
-            android:entries="@array/listOverlapShow"
-  			android:entryValues="@array/listOverlapReturn"
+            android:entries="@array/listOverwriteShow"
+  			android:entryValues="@array/listOverwriteReturn"
             />
     	<Preference
             android:key="path"
