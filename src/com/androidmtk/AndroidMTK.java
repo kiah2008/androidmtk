@@ -105,7 +105,7 @@ public class AndroidMTK extends Activity
                 .setText("GPS Settings")
                 .setTabListener(new TabListener<GPSSettingsFragment>(this, "gps_settings", GPSSettingsFragment.class)));
     
-        createGPX("2014-04-25_093511");
+        //createGPX("2014-04-25_093511");
     }
     
     // **** Restarting Button code ****
